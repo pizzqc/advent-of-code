@@ -25,13 +25,14 @@ func (s *GiantCargo) init(nbOfStack int) {
 	}
 }
 
-func (s *GiantCargo) move(source int, destination int) {
-	// Extract + Remove it from: source
-	crateToMove := s.Cargo[source-1].Crates[len(s.Cargo[source-1].Crates)-1]
-	s.Cargo[source-1].Crates = s.Cargo[source-1].Crates[:len(s.Cargo[source-1].Crates)-1]
+func (s *GiantCargo) move(amount int, source int, destination int) {
+	// Extract slice matching amount to move
+	crateToMove := s.Cargo[source-1].Crates[len(s.Cargo[source-1].Crates)-amount : len(s.Cargo[source-1].Crates)]
+	// Remove all crates amount from source
+	s.Cargo[source-1].Crates = s.Cargo[source-1].Crates[:len(s.Cargo[source-1].Crates)-amount]
 
-	// Add it to: destination
-	s.Cargo[destination-1].Crates = append(s.Cargo[destination-1].Crates, crateToMove)
+	// Add slice to: destination
+	s.Cargo[destination-1].Crates = append(s.Cargo[destination-1].Crates, crateToMove...)
 }
 
 func (s *GiantCargo) printTopStack() {
@@ -105,9 +106,7 @@ func main() {
 		amountToMove, _ := strconv.Atoi(match[1])
 		fromStack, _ := strconv.Atoi(match[2])
 		toStack, _ := strconv.Atoi(match[3])
-		for i := 0; i < amountToMove; i++ {
-			giantCargo.move(fromStack, toStack)
-		}
+		giantCargo.move(amountToMove, fromStack, toStack)
 	}
 
 	log.Printf("Update Cargo: %v\n", giantCargo)
