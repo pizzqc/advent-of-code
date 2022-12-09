@@ -14,17 +14,13 @@ func isFullyOverlap(pairs []string) bool {
 	p2Min, _ := strconv.Atoi(strings.Split(pairs[1], "-")[0])
 	p2Max, _ := strconv.Atoi(strings.Split(pairs[1], "-")[1])
 
-	// Check if P1 fits in P2
-	if (p1Min <= p2Min) && (p1Max >= p2Max) {
-		return true
+	// Check if P1 do NOT overlap witt P2 at all
+	if (p1Min < p2Min && p1Max < p2Min) ||
+		(p1Min > p2Max && p1Max > p2Max) {
+		return false
 	}
 
-	// Check if P2 fits in P1
-	if (p2Min <= p1Min) && (p2Max >= p1Max) {
-		return true
-	}
-
-	return false
+	return true
 }
 
 func main() {
