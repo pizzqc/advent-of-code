@@ -113,6 +113,33 @@ func (d *ElfDir) calculateSum(atMost int) int {
 	return totalSum
 }
 
+func (d *ElfDir) findSmallestWithAtLeast(neededSpace int) *ElfDir {
+	var goodCandidate *ElfDir
+	for _, directory := range d.Dirs {
+		candidate := directory.findSmallestWithAtLeast(neededSpace)
+		if candidate != nil && candidate.Size > neededSpace {
+			if goodCandidate == nil {
+				goodCandidate = candidate
+			} else if candidate.Size < goodCandidate.Size {
+				goodCandidate = candidate
+			}
+		}
+	}
+
+	if d.Size > neededSpace {
+		if goodCandidate == nil {
+			return d
+		} else if d.Size < goodCandidate.Size {
+			return d
+		}
+	}
+	return goodCandidate
+}
+
+func (d *ElfDir) String() string {
+	return fmt.Sprintf("Name: %s, Size: %v", d.Name, d.Size)
+}
+
 func main() {
 	inputFile, err := os.Open("input.txt")
 	if err != nil {
@@ -174,5 +201,14 @@ func main() {
 	// Part #1:
 	//   Find all of the directories with a total size of at most 100000, then calculate the sum of their total sizes.
 	part1Answer := currentDirectory.calculateSum(100000)
-	fmt.Printf("The sum is: %v", part1Answer)
+	fmt.Printf("The sum is: %v\n", part1Answer)
+
+	// Part #2:
+	totalDisk := 70000000
+	needSpace := 30000000
+
+	currentFreeSpace := totalDisk - currentDirectory.Size
+
+	bestCandidate := currentDirectory.findSmallestWithAtLeast(needSpace - currentFreeSpace)
+	fmt.Printf("The best candidate for deletion is: %v\n", bestCandidate)
 }
