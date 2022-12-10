@@ -21,7 +21,7 @@ func (m *Marker) contains(newChar string) (int, bool) {
 
 func (m *Marker) add(newChar string) bool {
 	m.marker = append(m.marker, newChar)
-	if len(m.marker) == 4 {
+	if len(m.marker) == 14 {
 		return true
 	} else {
 		return false
