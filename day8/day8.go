@@ -17,12 +17,15 @@ const (
 	RIGHT
 )
 
-func isVisible(rowIdx, colIdx, treeSize int, forest [][]int, direction Direction) bool {
+func isVisible(rowIdx, colIdx, treeSize int, forest [][]int, direction Direction) (bool, int) {
 	treeVisible := false
+	nbTreeVisible := 0
 	if forest[rowIdx][colIdx] < treeSize {
 		treeVisible = true
+		nbTreeVisible++
 	} else if forest[rowIdx][colIdx] >= treeSize {
-		return false
+		nbTreeVisible++
+		return false, nbTreeVisible
 	}
 
 	// Check if position is valid to keep traversing further
@@ -31,27 +34,35 @@ func isVisible(rowIdx, colIdx, treeSize int, forest [][]int, direction Direction
 		case UP:
 			if rowIdx > 0 {
 				// Recurse UP all the way or until we know it is hidden
-				return isVisible(rowIdx-1, colIdx, treeSize, forest, UP)
+				visible, count := isVisible(rowIdx-1, colIdx, treeSize, forest, UP)
+				nbTreeVisible += count
+				return visible, nbTreeVisible
 			}
 		case DOWN:
 			if rowIdx < len(forest)-1 {
 				// Recurse DOWN all the way or until we know it is hidden
-				return isVisible(rowIdx+1, colIdx, treeSize, forest, DOWN)
+				visible, count := isVisible(rowIdx+1, colIdx, treeSize, forest, DOWN)
+				nbTreeVisible += count
+				return visible, nbTreeVisible
 			}
 		case LEFT:
 			if colIdx > 0 {
 				// Recurse LEFT all the way or until we know it is hidden
-				return isVisible(rowIdx, colIdx-1, treeSize, forest, LEFT)
+				visible, count := isVisible(rowIdx, colIdx-1, treeSize, forest, LEFT)
+				nbTreeVisible += count
+				return visible, nbTreeVisible
 			}
 		case RIGHT:
 			if colIdx < len(forest[rowIdx])-1 {
 				// Recurse RIGHT all the way or until we know it is hidden
-				return isVisible(rowIdx, colIdx+1, treeSize, forest, RIGHT)
+				visible, count := isVisible(rowIdx, colIdx+1, treeSize, forest, RIGHT)
+				nbTreeVisible += count
+				return visible, nbTreeVisible
 			}
 		}
 	}
 
-	return treeVisible
+	return treeVisible, nbTreeVisible
 }
 
 func main() {
@@ -75,7 +86,7 @@ func main() {
 		row++
 	}
 
-	// Traverse the 2D arrays and build a mask of all the visible ones
+	// Initialize the 2D visbleTrees arrays tracker
 	visibleTrees := make([][]int, len(forest))
 	for i := 0; i < len(visibleTrees); i++ {
 		visibleTrees[i] = make([]int, len(forest[i]))
@@ -89,27 +100,26 @@ func main() {
 		for j, col := range row {
 			if i == 0 || j == 0 || i == len(forest)-1 || j == len(forest[i])-1 {
 				// Anything on the edge is visible
-				visibleTrees[i][j] = 1
-			} else if isVisible(i-1, j, col, forest, UP) {
-				visibleTrees[i][j] = 1
-			} else if isVisible(i+1, j, col, forest, DOWN) {
-				visibleTrees[i][j] = 1
-			} else if isVisible(i, j+1, col, forest, RIGHT) {
-				visibleTrees[i][j] = 1
-			} else if isVisible(i, j-1, col, forest, LEFT) {
-				visibleTrees[i][j] = 1
+				visibleTrees[i][j] = 0
+			} else {
+				_, UpCount := isVisible(i-1, j, col, forest, UP)
+				_, DownCount := isVisible(i+1, j, col, forest, DOWN)
+				_, RightCount := isVisible(i, j+1, col, forest, RIGHT)
+				_, LeftCount := isVisible(i, j-1, col, forest, LEFT)
+				visibleTrees[i][j] = (UpCount * DownCount * RightCount * LeftCount)
 			}
 		}
 	}
 
-	// Part 1: Total visible trees
-	totalVisible := 0
+	// Part 2: Scenic Score
+	maxScenicScore := 0
 	for _, row := range visibleTrees {
 		for _, col := range row {
-			if col == 1 {
-				totalVisible++
+			if col > maxScenicScore {
+				maxScenicScore = col
 			}
 		}
 	}
-	fmt.Printf("Visible trees: %v", totalVisible)
+	fmt.Printf("Max Scenic Score: %v\n", maxScenicScore)
+
 }
