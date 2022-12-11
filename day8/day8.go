@@ -1,6 +1,7 @@
 package main
 
 import (
+	"advent-code-2022/common"
 	"bufio"
 	"fmt"
 	"log"
@@ -8,16 +9,7 @@ import (
 	"strconv"
 )
 
-type Direction int
-
-const (
-	UP Direction = iota + 1
-	DOWN
-	LEFT
-	RIGHT
-)
-
-func isVisible(rowIdx, colIdx, treeSize int, forest [][]int, direction Direction) (bool, int) {
+func isVisible(rowIdx, colIdx, treeSize int, forest [][]int, direction common.Direction) (bool, int) {
 	treeVisible := false
 	nbTreeVisible := 0
 	if forest[rowIdx][colIdx] < treeSize {
@@ -31,31 +23,31 @@ func isVisible(rowIdx, colIdx, treeSize int, forest [][]int, direction Direction
 	// Check if position is valid to keep traversing further
 	if rowIdx >= 0 || colIdx >= 0 || rowIdx < len(forest)-1 || colIdx < len(forest[rowIdx])-1 {
 		switch direction {
-		case UP:
+		case common.UP:
 			if rowIdx > 0 {
 				// Recurse UP all the way or until we know it is hidden
-				visible, count := isVisible(rowIdx-1, colIdx, treeSize, forest, UP)
+				visible, count := isVisible(rowIdx-1, colIdx, treeSize, forest, common.UP)
 				nbTreeVisible += count
 				return visible, nbTreeVisible
 			}
-		case DOWN:
+		case common.DOWN:
 			if rowIdx < len(forest)-1 {
 				// Recurse DOWN all the way or until we know it is hidden
-				visible, count := isVisible(rowIdx+1, colIdx, treeSize, forest, DOWN)
+				visible, count := isVisible(rowIdx+1, colIdx, treeSize, forest, common.DOWN)
 				nbTreeVisible += count
 				return visible, nbTreeVisible
 			}
-		case LEFT:
+		case common.LEFT:
 			if colIdx > 0 {
 				// Recurse LEFT all the way or until we know it is hidden
-				visible, count := isVisible(rowIdx, colIdx-1, treeSize, forest, LEFT)
+				visible, count := isVisible(rowIdx, colIdx-1, treeSize, forest, common.LEFT)
 				nbTreeVisible += count
 				return visible, nbTreeVisible
 			}
-		case RIGHT:
+		case common.RIGHT:
 			if colIdx < len(forest[rowIdx])-1 {
 				// Recurse RIGHT all the way or until we know it is hidden
-				visible, count := isVisible(rowIdx, colIdx+1, treeSize, forest, RIGHT)
+				visible, count := isVisible(rowIdx, colIdx+1, treeSize, forest, common.RIGHT)
 				nbTreeVisible += count
 				return visible, nbTreeVisible
 			}
@@ -102,10 +94,10 @@ func main() {
 				// Anything on the edge is visible
 				visibleTrees[i][j] = 0
 			} else {
-				_, UpCount := isVisible(i-1, j, col, forest, UP)
-				_, DownCount := isVisible(i+1, j, col, forest, DOWN)
-				_, RightCount := isVisible(i, j+1, col, forest, RIGHT)
-				_, LeftCount := isVisible(i, j-1, col, forest, LEFT)
+				_, UpCount := isVisible(i-1, j, col, forest, common.UP)
+				_, DownCount := isVisible(i+1, j, col, forest, common.DOWN)
+				_, RightCount := isVisible(i, j+1, col, forest, common.RIGHT)
+				_, LeftCount := isVisible(i, j-1, col, forest, common.LEFT)
 				visibleTrees[i][j] = (UpCount * DownCount * RightCount * LeftCount)
 			}
 		}
