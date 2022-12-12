@@ -152,7 +152,7 @@ func (r *RopeKnot) moveKnot() {
 			r.Position.X--
 			r.Position.Y--
 		}
-	} else if diffX < 0 { // 1+ ROW BELOW
+	} else if diffX < 0 { // 1+ ROW ABOVE
 		if diffY < 0 {
 			r.Position.X++
 			r.Position.Y++
