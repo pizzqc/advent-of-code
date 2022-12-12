@@ -37,10 +37,6 @@ type Cell struct {
 	visitedCount int
 }
 
-type CellOptions struct {
-	X, Y int
-}
-
 func NewRope(size int) *RopeKnot {
 	head := &RopeKnot{
 		Position: CartesianPosition{X: 0, Y: 0},
@@ -61,12 +57,11 @@ func NewRope(size int) *RopeKnot {
 	}
 
 	return head
-
 }
 
-func NewCell(options CellOptions) *Cell {
+func NewCell(options CartesianPosition) *Cell {
 	return &Cell{
-		Position:     CartesianPosition{X: options.X, Y: options.Y},
+		Position:     options,
 		visitedCount: 0,
 	}
 }
@@ -74,7 +69,7 @@ func NewCell(options CellOptions) *Cell {
 func NewRow(x, length int) []Cell {
 	newRow := []Cell{}
 	for y := 0; y < length; y++ {
-		newRow = append(newRow, *NewCell(CellOptions{
+		newRow = append(newRow, *NewCell(CartesianPosition{
 			X: x,
 			Y: y,
 		}))
@@ -215,15 +210,13 @@ func (m *Matrix) Left(count int) {
 		}
 
 		m.Move(common.LEFT)
-
 	}
 }
 
 func (m *Matrix) Move(direction common.Direction) {
-	// Move: HEAD
 	m.moveHead(direction)
 
-	// Move: Tail Knots
+	// Move: All Tail Knots if needed
 	currentKnot := m.Head
 	for currentKnot.Next != nil {
 		if !currentKnot.isConnected() {
@@ -242,7 +235,7 @@ func (m *Matrix) increaseMatrix(direction common.Direction) {
 	switch direction {
 	case common.RIGHT:
 		for i, row := range m.Cells {
-			nc := NewCell(CellOptions{
+			nc := NewCell(CartesianPosition{
 				X: i,
 				Y: len(row)})
 			m.Cells[i] = append(row, *nc)
@@ -255,7 +248,7 @@ func (m *Matrix) increaseMatrix(direction common.Direction) {
 
 	case common.LEFT:
 		for i, row := range m.Cells {
-			nc := NewCell(CellOptions{
+			nc := NewCell(CartesianPosition{
 				X: i,
 				Y: 0})
 			m.Cells[i] = append([]Cell{*nc}, row...)
