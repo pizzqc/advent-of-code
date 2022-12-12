@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -16,16 +17,40 @@ const (
 	ADDX
 )
 
+type Pos struct {
+	start, end int
+}
+
 type CPU struct {
 	X            int
 	Cycle        int
 	Stack        []Instruction
 	SignalChecks map[int]int
+	CRT          []string
+	SpritePos    Pos
 }
 
 type Instruction struct {
 	cmd   Command
 	value int
+}
+
+func NewCPU() CPU {
+	return CPU{
+		X:     1,
+		Cycle: -1,
+		Stack: []Instruction{},
+		SignalChecks: map[int]int{
+			20:  0,
+			60:  0,
+			100: 0,
+			140: 0,
+			180: 0,
+			220: 0,
+		},
+		CRT:       make([]string, 6),
+		SpritePos: Pos{start: 0, end: 2},
+	}
 }
 
 func (c *CPU) addInstruction(line string) {
@@ -46,20 +71,44 @@ func (c *CPU) computeSignalStr() {
 	}
 }
 
+func (c *CPU) drawCRT() {
+	crtVerticalIdx := int(math.Trunc(float64(c.Cycle) / float64(40)))
+	nextDrawPos := len(c.CRT[crtVerticalIdx])
+	if nextDrawPos <= c.SpritePos.end && nextDrawPos >= c.SpritePos.start {
+		c.CRT[crtVerticalIdx] = c.CRT[crtVerticalIdx] + "#"
+	} else {
+		c.CRT[crtVerticalIdx] = c.CRT[crtVerticalIdx] + "."
+	}
+}
+
+func (c *CPU) increaseCycle() {
+	c.Cycle++
+	c.drawCRT()
+}
+
+func (c *CPU) printCRT() {
+	for _, crtLine := range c.CRT {
+		fmt.Printf("%s\n", crtLine)
+	}
+}
+
 func (c *CPU) processStack() {
 	for _, inst := range c.Stack {
 		fmt.Printf("Processing instruction: %v\n", inst)
 		switch inst.cmd {
 		case NOOP:
-			c.Cycle++
+			c.increaseCycle()
 			c.computeSignalStr()
 		case ADDX:
-			c.Cycle++
+			c.increaseCycle()
 			c.computeSignalStr()
-			c.Cycle++
+			c.increaseCycle()
 			c.X += inst.value
 			c.computeSignalStr()
+			c.SpritePos.start = c.X - 1
+			c.SpritePos.end = c.X + 1
 		}
+		c.printCRT()
 	}
 }
 
@@ -69,22 +118,10 @@ func main() {
 		log.Fatal(err)
 	}
 	defer inputFile.Close()
+
+	cpu := NewCPU()
+
 	scanner := bufio.NewScanner(inputFile)
-
-	cpu := CPU{
-		X:     1,
-		Cycle: 0,
-		Stack: []Instruction{},
-		SignalChecks: map[int]int{
-			20:  0,
-			60:  0,
-			100: 0,
-			140: 0,
-			180: 0,
-			220: 0,
-		},
-	}
-
 	for scanner.Scan() {
 		line := scanner.Text()
 		cpu.addInstruction(line)
