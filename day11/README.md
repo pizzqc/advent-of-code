@@ -225,3 +225,9 @@ Monkey 3 inspected items 105 times.
 In this example, the two most active monkeys inspected items 101 and 105 times. The level of **monkey business** in this situation can be found by multiplying these together: `10605`.
 
 Figure out which monkeys to chase by counting how many items they inspect over 20 rounds. **What is the level of monkey business after 20 rounds of stuff-slinging simian shenanigans?**
+
+# Solutions
+
+* Key takeaway to resolve this puzzle is to avoid having to deal with multiplication of numbers that are very big (300k long numbers)...  Unless you have a super fast computer this thing will take 10 years to run by the time you reach round 10000.
+* To keep all Monkey behaving the same, we can apply (Modular arithmetic)[https://en.wikipedia.org/wiki/Modular_arithmetic]
+  * This was resolved by multiplying the test value of all Monkeys (`divided by`) and then using this value to `modulo` all multiplication operation the monkeys are doing.  Therefore limiting the size the final item worry level can grow up to while keeping the same behavior/outcome
