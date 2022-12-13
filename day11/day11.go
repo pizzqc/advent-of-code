@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"regexp"
 	"sort"
@@ -13,7 +12,7 @@ import (
 )
 
 const (
-	TOTAL_ROUND int = 20
+	TOTAL_ROUND int = 10000
 )
 
 const (
@@ -62,8 +61,9 @@ func GetOperator(op string) Operator {
 }
 
 type MonkeyTeam struct {
-	Monkey         []Monkey
-	CompletedRound int
+	Monkey            []Monkey
+	CompletedRound    int
+	CommonDenominator int
 }
 
 // Return top X monkey inspected times
@@ -76,6 +76,13 @@ func (mt *MonkeyTeam) getTopMonkey(topX int) []int {
 	sort.Ints(inspectedTimes)
 
 	return inspectedTimes[len(inspectedTimes)-topX:]
+}
+
+func (mt *MonkeyTeam) print(round int) {
+	fmt.Printf("== After round %v ==\n", round)
+	for i, mk := range mt.Monkey {
+		fmt.Printf("Monkey %v inspected items %v times\n", i, mk.itemInspected)
+	}
 }
 
 type Monkey struct {
@@ -123,7 +130,6 @@ func NewMonkey(input []string) Monkey {
 	// Parse operations
 	re := regexp.MustCompile(`new = old ([*+]) (\w+)`)
 	opMatch := re.FindStringSubmatch(rawOperations)
-	// opValue, _ := strconv.Atoi(opMatch[2])
 
 	// Parse test
 	re = regexp.MustCompile(`divisible by (\d+)`)
@@ -155,7 +161,7 @@ func NewMonkey(input []string) Monkey {
 	return monkey
 }
 
-func (op *Operation) apply(old int) int {
+func (op *Operation) apply(old int, modulo int) int {
 	var opValue int
 	if op.Value == "old" {
 		opValue = old
@@ -166,14 +172,12 @@ func (op *Operation) apply(old int) int {
 	new := -1
 	switch op.Action {
 	case MULTI:
-		new = old * opValue
+		new = (old * opValue) % modulo
 	case ADD:
 		new = old + opValue
-	case SUB:
-		new = old - opValue
 	}
 
-	fmt.Printf("\t\tWorry level is %s %v to %v.\n", op.Action.string(), opValue, new)
+	// fmt.Printf("\t\tWorry level is %s %v to %v.\n", op.Action.string(), opValue, new)
 	return new
 }
 
@@ -181,29 +185,33 @@ func (mt *MonkeyTeam) add(m Monkey) {
 	mt.Monkey = append(mt.Monkey, m)
 }
 
+func (mt *MonkeyTeam) resolveCommonDenominator() {
+	// Multiply all test division that all monkeys are doing and then
+	// use it as the modulo for all multiplication applied by the monkeys in apply(...) function
+	for _, mk := range mt.Monkey {
+		mt.CommonDenominator = mt.CommonDenominator * mk.Test
+	}
+}
+
 func (mt *MonkeyTeam) playRound() {
 	// Fully Process each Monkey per Round
 	for i, mk := range mt.Monkey {
-		fmt.Printf("Monkey %v\n", i)
+		// fmt.Printf("Monkey %v\n", i)
 		for _, item := range mk.Items {
 			// Monkey Inspect by applying its Operation
-			fmt.Printf("\tMonkey inspects an item with a worry level of %v.\n", item)
+			// fmt.Printf("\tMonkey inspects an item with a worry level of %v.\n", item)
 			mt.Monkey[i].itemInspected++
-			item = mk.Op.apply(item)
-
-			// Worry level divided by 3 and round down to nearest integer
-			item = int(math.Trunc(float64(item) / float64(3)))
-			fmt.Printf("\t\tMonkey gets bored with item. Worry level is divided by 3 to %v.\n", item)
+			item := mk.Op.apply(item, mt.CommonDenominator)
 
 			// Test Outcome
 			if item%mk.Test == 0 {
-				fmt.Printf("\t\tCurrent worry level is divisible by %v.\n", mk.Test)
+				// fmt.Printf("\t\tCurrent worry level is divisible by %v.\n", mk.Test)
 				mt.Monkey[mk.Outcome.Success].Items = append(mt.Monkey[mk.Outcome.Success].Items, item)
-				fmt.Printf("\t\tItem with worry level %v is thrown to monkey %v.\n", item, mk.Outcome.Success)
+				// fmt.Printf("\t\tItem with worry level %v is thrown to monkey %v.\n", item, mk.Outcome.Success)
 			} else {
-				fmt.Printf("\t\tCurrent worry level is not divisible by %v.\n", mk.Test)
+				// fmt.Printf("\t\tCurrent worry level is not divisible by %v.\n", mk.Test)
 				mt.Monkey[mk.Outcome.Failure].Items = append(mt.Monkey[mk.Outcome.Failure].Items, item)
-				fmt.Printf("\t\tItem with worry level %v is thrown to monkey %v.\n", item, mk.Outcome.Failure)
+				// fmt.Printf("\t\tItem with worry level %v is thrown to monkey %v.\n", item, mk.Outcome.Failure)
 			}
 		}
 		// Empty all items from the monkey
@@ -221,8 +229,9 @@ func main() {
 	scanner := bufio.NewScanner(inputFile)
 	monkeyRaw := []string{}
 	mt := MonkeyTeam{
-		Monkey:         []Monkey{},
-		CompletedRound: 0,
+		Monkey:            []Monkey{},
+		CompletedRound:    0,
+		CommonDenominator: 1,
 	}
 
 	for scanner.Scan() {
@@ -238,13 +247,18 @@ func main() {
 	monkey := NewMonkey(monkeyRaw)
 	mt.add(monkey)
 
+	mt.resolveCommonDenominator()
+
 	roundCompleted := 0
 	for roundCompleted < TOTAL_ROUND {
 		mt.playRound()
 		roundCompleted++
+		if roundCompleted == 1 || roundCompleted == 20 || roundCompleted%1000 == 0 {
+			mt.print(roundCompleted)
+		}
 	}
 
-	// Part1
+	// Results
 	topInspected := mt.getTopMonkey(2)
 	fmt.Println("TopInspected = ", topInspected)
 	fmt.Printf("What is the level of monkey business after 20 rounds of stuff-slinging simian shenanigans?: %v", topInspected[0]*topInspected[1])
