@@ -134,8 +134,8 @@ func (t *Traveler) DistanceFrom(pos Position) int {
 	return t.DistanceTracker[pos.X][pos.Y]
 }
 
-func GetShortestPath(emap ElevationMap) int {
-	t := NewTraveler(emap, emap.Start)
+func GetShortestPath(emap ElevationMap, start Position) int {
+	t := NewTraveler(emap, start)
 	for t.Queue.Len() > 0 {
 		t.travel()
 	}
@@ -173,6 +173,30 @@ func main() {
 	}
 
 	// Results
-	nbSteps := GetShortestPath(emap)
-	fmt.Printf("What is the fewest steps required to move from your current position to the location that should get the best signal?: %v\n", nbSteps)
+	allLowestPointSteps := make(map[Position]int)
+
+	for i, row := range emap.Elevation {
+		for j, col := range row {
+			if col == int(rune('a')) {
+				pos := Position{X: i, Y: j}
+				count := GetShortestPath(emap, pos)
+				allLowestPointSteps[pos] = count
+			}
+		}
+	}
+
+	var lowestPos Position
+	var lowestStep int
+	for key, count := range allLowestPointSteps {
+		if count != -1 {
+			if lowestStep == 0 {
+				lowestStep = count
+				lowestPos = key
+			} else if count < lowestStep {
+				lowestStep = count
+				lowestPos = key
+			}
+		}
+	}
+	fmt.Printf("What is the fewest steps required to move from your current position to the location that should get the best signal?: %v from position %v\n", lowestStep, lowestPos)
 }
