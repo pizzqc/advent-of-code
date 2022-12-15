@@ -1,4 +1,4 @@
---- Day 12: Hill Climbing Algorithm ---
+# --- Day 12: Hill Climbing Algorithm ---
 You try contacting the Elves using your handheld device, but the river you're following must be too low to get a decent signal.
 
 You ask the device for a heightmap of the surrounding area (your puzzle input). The heightmap shows the local area from above broken into a grid; the elevation of each square of the grid is given by a single lowercase letter, where a is the lowest elevation, b is the next-lowest, and so on up to the highest elevation, z.
@@ -36,3 +36,9 @@ This path reaches the goal in 31 steps, the fewest possible.
 
 * At first I went with a DFS (Depth First Search) and dealing with the response back as the stack un-pilled but it was very messy and I couldn't figure out how to find the shortest... only able to find a path
 * The proper approach was to use a BFS (Breath First Search) and keeping track of all the distance in a seperate matrix holding the values the distance to reach a given point in the matrix from a starting location
+
+# Solution Part2
+
+* The first solution was to calculate the shortest path from all "a" location which worked but was not very efficient -- It was still finishing quickly but I realized later there is a much better way...
+* The 2nd approach I took on part-2 was to reverse the BFS algorithm to start from the END until we reach an "a" and then returning the shortest distance of all the "a" found along the way... reducing the O(time) complexity significantly since we'll only run the BFS once instead of n*times.
+  * I haven't try it but might be a way to exit the BFS as soon as we find the first "a" instead of traversing the rest of the matrix until all "a" were computed.
