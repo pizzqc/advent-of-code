@@ -26,7 +26,7 @@ type Position struct {
 }
 
 type Traveler struct {
-	Elevation       ElevationMap
+	Maze            ElevationMap
 	DistanceTracker [][]int
 	Start           Position
 	Queue           *list.List
@@ -42,7 +42,7 @@ func NewTraveler(emap ElevationMap, start Position) *Traveler {
 	}
 
 	t := &Traveler{
-		Elevation:       emap,
+		Maze:            emap,
 		Start:           start,
 		Queue:           list.New(),
 		DistanceTracker: d,
@@ -55,15 +55,6 @@ func NewTraveler(emap ElevationMap, start Position) *Traveler {
 
 func NewPos(x, y int) Position {
 	return Position{X: x, Y: y}
-}
-
-func (p Position) GetNeighbors() []Position {
-	up := Position{p.X - 1, p.Y}
-	right := Position{p.X, p.Y + 1}
-	down := Position{p.X + 1, p.Y}
-	left := Position{p.X, p.Y - 1}
-
-	return []Position{up, right, down, left}
 }
 
 func (t *Traveler) travel() error {
@@ -82,7 +73,7 @@ func (t *Traveler) travel() error {
 		t.DistanceTracker[pos.X][pos.Y] = 0
 	}
 
-	neighbors := t.Elevation.FindNeighbors(pos.X, pos.Y)
+	neighbors := t.Maze.FindNeighbors(pos.X, pos.Y)
 
 	for _, n := range neighbors {
 		if t.DistanceTracker[n.X][n.Y] == -1 {
@@ -99,30 +90,35 @@ func (e *ElevationMap) FindNeighbors(row, col int) []Position {
 
 	currentElevation := int(e.Elevation[row][col])
 
+	// Part2: if current node is an "a" it is our first one and we do not return any more neighbors to exit the BFS
+	if e.Elevation[row][col] == int(rune('a')) {
+		return validOptions
+	}
+
 	// Check UP is valid
 	if row > 0 {
-		if int(e.Elevation[row-1][col]) <= currentElevation+1 {
+		if int(e.Elevation[row-1][col]) >= currentElevation-1 {
 			validOptions = append(validOptions, Position{X: row - 1, Y: col})
 		}
 	}
 
 	// Check RIGHT is valid
 	if len(e.Elevation[row])-1 > col {
-		if int(e.Elevation[row][col+1]) <= currentElevation+1 {
+		if int(e.Elevation[row][col+1]) >= currentElevation-1 {
 			validOptions = append(validOptions, Position{X: row, Y: col + 1})
 		}
 	}
 
 	// Check DOWN is valid
 	if len(e.Elevation)-1 > row {
-		if int(e.Elevation[row+1][col]) <= currentElevation+1 {
+		if int(e.Elevation[row+1][col]) >= currentElevation-1 {
 			validOptions = append(validOptions, Position{X: row + 1, Y: col})
 		}
 	}
 
 	// Check LEFT is valid
 	if col > 0 {
-		if int(e.Elevation[row][col-1]) <= currentElevation+1 {
+		if int(e.Elevation[row][col-1]) >= currentElevation-1 {
 			validOptions = append(validOptions, Position{X: row, Y: col - 1})
 		}
 	}
@@ -134,13 +130,29 @@ func (t *Traveler) DistanceFrom(pos Position) int {
 	return t.DistanceTracker[pos.X][pos.Y]
 }
 
-func GetShortestPath(emap ElevationMap, start Position) int {
+func (t *Traveler) LowestDistanceFromRune(r rune) (Position, int) {
+	pos := Position{}
+	lowest := 99999999999
+	for i, row := range t.Maze.Elevation {
+		for j, col := range row {
+			if col == int(r) {
+				if t.DistanceTracker[i][j] < lowest && t.DistanceTracker[i][j] != -1 {
+					lowest = t.DistanceTracker[i][j]
+					pos = Position{X: i, Y: j}
+				}
+			}
+		}
+	}
+	return pos, lowest
+}
+
+func GetShortestPath(emap ElevationMap, start Position) (Position, int) {
 	t := NewTraveler(emap, start)
 	for t.Queue.Len() > 0 {
 		t.travel()
 	}
 
-	return t.DistanceFrom(emap.End)
+	return t.LowestDistanceFromRune(rune('a'))
 }
 
 func main() {
@@ -172,31 +184,35 @@ func main() {
 		lineNb++
 	}
 
-	// Results
-	allLowestPointSteps := make(map[Position]int)
+	// Part 2: Results - Works but not very efficient
+	// allLowestPointSteps := make(map[Position]int)
+	// for i, row := range emap.Elevation {
+	// 	for j, col := range row {
+	// 		if col == int(rune('a')) {
+	// 			pos := Position{X: i, Y: j}
+	// 			count := GetShortestPath(emap, pos)
+	// 			allLowestPointSteps[pos] = count
+	// 		}
+	// 	}
+	// }
 
-	for i, row := range emap.Elevation {
-		for j, col := range row {
-			if col == int(rune('a')) {
-				pos := Position{X: i, Y: j}
-				count := GetShortestPath(emap, pos)
-				allLowestPointSteps[pos] = count
-			}
-		}
-	}
+	// var lowestPos Position
+	// var lowestStep int
+	// for key, count := range allLowestPointSteps {
+	// 	if count != -1 {
+	// 		if lowestStep == 0 {
+	// 			lowestStep = count
+	// 			lowestPos = key
+	// 		} else if count < lowestStep {
+	// 			lowestStep = count
+	// 			lowestPos = key
+	// 		}
+	// 	}
+	// }
+	// Answer is 443
 
-	var lowestPos Position
-	var lowestStep int
-	for key, count := range allLowestPointSteps {
-		if count != -1 {
-			if lowestStep == 0 {
-				lowestStep = count
-				lowestPos = key
-			} else if count < lowestStep {
-				lowestStep = count
-				lowestPos = key
-			}
-		}
-	}
-	fmt.Printf("What is the fewest steps required to move from your current position to the location that should get the best signal?: %v from position %v\n", lowestStep, lowestPos)
+	// Part 2 - Optimized :  Do BFS but starting from the END until the first "a"
+	pos, count := GetShortestPath(emap, emap.End)
+
+	fmt.Printf("What is the fewest steps required to move from your current position to the location that should get the best signal?: %v from position %v", count, pos)
 }
